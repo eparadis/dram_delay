@@ -9,6 +9,7 @@
 #define AD4 11
 #define AD5 10
 #define AD6 A3 // will be used as a digital output
+#define AD7 9
 #define DOUT A1 // will be used as a digital input
 #define _CAS 2
 
@@ -26,6 +27,7 @@ void setup() {
   pinMode(AD4, OUTPUT);
   pinMode(AD5, OUTPUT);
   pinMode(AD6, OUTPUT);
+  pinMode(AD7, OUTPUT);
   pinMode(_WE, OUTPUT);
   pinMode(DOUT, INPUT);  // our one input!
   pinMode(_CAS, OUTPUT);
@@ -41,6 +43,7 @@ void setRowAddress( byte addr) {
   digitalWrite(AD4, addr & 0x10);
   digitalWrite(AD5, addr & 0x20);
   digitalWrite(AD6, addr & 0x40);
+  digitalWrite(AD7, addr & 0x80);
 }
 
 void assertRAS() {
@@ -55,6 +58,7 @@ void setColumnAddress( byte addr) {
   digitalWrite(AD4, addr & 0x10);
   digitalWrite(AD5, addr & 0x20);
   digitalWrite(AD6, addr & 0x40);
+  digitalWrite(AD7, addr & 0x80);
 }
 
 void assertCAS() {
@@ -108,18 +112,22 @@ byte readFromDRAM( byte row, byte col) {
   return val;
 }
 
+#define ROW_MAX 64
+#define COL_MAX 64
 
 void loop() {
+  digitalWrite(LED_BUILTIN, HIGH);
   Serial.println("writing...");
-  for( byte row = 0; row < 64; row+=1) {
-    for( byte col = 0; col < 64; col+=1) {
+  for( int row = 0; row < ROW_MAX; row+=1) {
+    for( int col = 0; col < COL_MAX; col+=1) {
       writeToDRAM(row, col, HIGH);
     }
   }
 
+  digitalWrite(LED_BUILTIN, LOW);
   Serial.println("reading...");
-  for( byte row = 0; row < 64; row+=1) {
-    for( byte col = 0; col < 64; col+=1) {
+  for( int row = 0; row < ROW_MAX; row+=1) {
+    for( int col = 0; col < COL_MAX; col+=1) {
       if( !readFromDRAM(row, col)) {
         Serial.print("LOW ");
         Serial.print(row);
@@ -129,9 +137,4 @@ void loop() {
       }
     }
   }
-  
-  digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
-  delay(1000);                       // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-  delay(100);                       // wait for a second
 }
