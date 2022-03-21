@@ -85,7 +85,51 @@ void writeData( byte d) {
   digitalWrite(DIN, d);
 }
 
+void writeToDRAM( byte row, byte col, byte val) {
+  setRowAddress(row);
+  assertRAS();
+  assertWrite();
+  writeData(val);
+  setColumnAddress(col);
+  assertCAS();
+  unassertWrite();
+  unassertCAS();
+  unassertRAS();
+}
+
+byte readFromDRAM( byte row, byte col) {
+  setRowAddress(row);
+  assertRAS();
+  setColumnAddress(col);
+  assertCAS();
+  byte val = readData();
+  unassertCAS();
+  unassertRAS();
+  return val;
+}
+
+
 void loop() {
+  Serial.println("writing...");
+  for( byte row = 0; row < 64; row+=1) {
+    for( byte col = 0; col < 64; col+=1) {
+      writeToDRAM(row, col, HIGH);
+    }
+  }
+
+  Serial.println("reading...");
+  for( byte row = 0; row < 64; row+=1) {
+    for( byte col = 0; col < 64; col+=1) {
+      if( !readFromDRAM(row, col)) {
+        Serial.print("LOW ");
+        Serial.print(row);
+        Serial.print(" ");
+        Serial.print(col);
+        Serial.print("\n");
+      }
+    }
+  }
+  
   digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
   delay(1000);                       // wait for a second
   digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
