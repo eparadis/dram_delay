@@ -135,6 +135,7 @@ byte input;
 byte val_out;
 
 // inlining the assert___ and unassert___ did zero speed up, so I dropped that commit
+// using bytes (and max of 255) for loops didn't do anything. 
 
 void loop() {
 //  Serial.print(".");
