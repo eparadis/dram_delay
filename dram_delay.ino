@@ -112,6 +112,21 @@ byte readFromDRAM( byte row, byte col) {
   return val;
 }
 
+byte readAndWriteDRAM( byte row, byte col, byte val_in) {
+  setRowAddress(row);
+  assertRAS();
+  setColumnAddress(col);
+  assertCAS();
+  byte val_out = readData();
+  writeData(val_in);
+  assertWrite();
+  //delayMicroseconds(1); // technicnally we need to wait 45 nanoseconds here... probably ok doing nothing?
+  unassertWrite();
+  unassertCAS();
+  unassertRAS();
+  return val_out;
+}
+
 #define ROW_MAX 64
 #define COL_MAX 64
 
@@ -129,7 +144,7 @@ void loop() {
   for( int row = 0; row < ROW_MAX; row+=1) {
     for( int col = 0; col < COL_MAX; col+=1) {
       if( !readFromDRAM(row, col)) {
-        Serial.print("LOW ");
+        Serial.print("unexpected LOW ");
         Serial.print(row);
         Serial.print(" ");
         Serial.print(col);
@@ -137,4 +152,33 @@ void loop() {
       }
     }
   }
+
+  digitalWrite(LED_BUILTIN, HIGH);
+  Serial.println("reading (high expected) and writing low...");
+  for( int row = 0; row < ROW_MAX; row+=1) {
+    for( int col = 0; col < COL_MAX; col+=1) {
+      if( !readAndWriteDRAM(row, col, LOW)) {
+        Serial.print("unexpected LOW ");
+        Serial.print(row);
+        Serial.print(" ");
+        Serial.print(col);
+        Serial.print("\n");
+      }
+    }
+  }
+
+  digitalWrite(LED_BUILTIN, LOW);
+  Serial.println("reading (low expected) and writing high...");
+  for( int row = 0; row < ROW_MAX; row+=1) {
+    for( int col = 0; col < COL_MAX; col+=1) {
+      if( readAndWriteDRAM(row, col, HIGH)) {
+        Serial.print("unexpected HIGH ");
+        Serial.print(row);
+        Serial.print(" ");
+        Serial.print(col);
+        Serial.print("\n");
+      }
+    }
+  }
+  
 }
