@@ -37,6 +37,13 @@ void setup() {
   DIDR1 = 0x03; // turn off digital inputs for analog comparator (pg 259 of datasheet)
   ACSR = 0x00; // setup analog comparator
   TIMSK0 = 0x00; // turn off delay timer to reduce jitter
+
+
+  ADCSRA = bit(ADEN) // Turn ADC on
+           | bit(ADPS0) | bit(ADPS1) | bit(ADPS2); // Prescaler of 128
+  byte adcPin = A7;
+  ADMUX  = bit(REFS0) // AVCC
+           | ((adcPin - 14) & 0x07); // Arduino Uno to ADC pin
 }
 
 void setAddress( byte addr) {
@@ -156,6 +163,9 @@ int row;
 int col;
 byte input;
 byte val_out;
+int dummy;
+bool adc_conversion_working = false;
+int start_row = 0;
 
 // inlining the assert___ and unassert___ did zero speed up, so I dropped that commit
 // using bytes (and max of 255) for loops didn't do anything. 
@@ -163,7 +173,7 @@ byte val_out;
 void loop() {
 //  Serial.print(".");
   while(1) {
-    for( row = 0; row < ROW_MAX; row+=1) {
+    for( row = start_row; row < ROW_MAX; row+=1) {
       setAddress(row);
       assertRAS();
 
@@ -190,6 +200,18 @@ void loop() {
       }
 
       unassertRAS();
+
+      if( !adc_conversion_working) {
+        bitSet(ADCSRA, ADSC);  // Start a conversion
+        adc_conversion_working = true;
+      }
+
+      // The ADC clears the bit when done
+      if (bit_is_clear(ADCSRA, ADSC)) {
+        dummy = ADC >> 2;
+        start_row = constrain(dummy, 0, ROW_MAX - 1);  // Read result
+        adc_conversion_working = false;
+      }
     }
   }
 }
