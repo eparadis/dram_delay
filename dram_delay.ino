@@ -140,7 +140,13 @@ void loop() {
         setAddress(col);
         assertCAS();
         val_out = readData();
-        writeData(input);
+        //writeData(input);
+        // write data
+        if( input)
+          PORTD |= (1<<PD5);
+        else
+          PORTD &= ~(1<<PD5);
+        
         assertWrite();
         unassertWrite();
         unassertCAS();
