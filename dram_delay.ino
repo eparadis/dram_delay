@@ -2,9 +2,9 @@
 #define DIN 5
 #define _WE 4
 #define _RAS 3
-#define AD0 6
+#define AD0 A0 // will be used as a digital output
 #define AD1 8
-#define AD2 7
+#define AD2 A2 // will be used as a digital output
 #define AD3 12
 #define AD4 11
 #define AD5 10
@@ -33,6 +33,9 @@ void setup() {
   pinMode(_CAS, OUTPUT);
 
   Serial.begin(9600);
+
+  DIDR1 = 0x03; // turn off digital inputs for analog comparator
+  ACSR = 0x00; // setup analog comparator
 }
 
 void setRowAddress( byte addr) {
@@ -127,57 +130,16 @@ byte readAndWriteDRAM( byte row, byte col, byte val_in) {
   return val_out;
 }
 
-#define ROW_MAX 64
-#define COL_MAX 64
+#define ROW_MAX 256
+#define COL_MAX 256
 
 void loop() {
-  digitalWrite(LED_BUILTIN, HIGH);
-  Serial.println("writing...");
+  Serial.print(".");
   for( int row = 0; row < ROW_MAX; row+=1) {
     for( int col = 0; col < COL_MAX; col+=1) {
-      writeToDRAM(row, col, HIGH);
-    }
-  }
-
-  digitalWrite(LED_BUILTIN, LOW);
-  Serial.println("reading...");
-  for( int row = 0; row < ROW_MAX; row+=1) {
-    for( int col = 0; col < COL_MAX; col+=1) {
-      if( !readFromDRAM(row, col)) {
-        Serial.print("unexpected LOW ");
-        Serial.print(row);
-        Serial.print(" ");
-        Serial.print(col);
-        Serial.print("\n");
-      }
-    }
-  }
-
-  digitalWrite(LED_BUILTIN, HIGH);
-  Serial.println("reading (high expected) and writing low...");
-  for( int row = 0; row < ROW_MAX; row+=1) {
-    for( int col = 0; col < COL_MAX; col+=1) {
-      if( !readAndWriteDRAM(row, col, LOW)) {
-        Serial.print("unexpected LOW ");
-        Serial.print(row);
-        Serial.print(" ");
-        Serial.print(col);
-        Serial.print("\n");
-      }
-    }
-  }
-
-  digitalWrite(LED_BUILTIN, LOW);
-  Serial.println("reading (low expected) and writing high...");
-  for( int row = 0; row < ROW_MAX; row+=1) {
-    for( int col = 0; col < COL_MAX; col+=1) {
-      if( readAndWriteDRAM(row, col, HIGH)) {
-        Serial.print("unexpected HIGH ");
-        Serial.print(row);
-        Serial.print(" ");
-        Serial.print(col);
-        Serial.print("\n");
-      }
+      byte input = ACSR & (1<<ACO); // get comparator data
+      byte output = readAndWriteDRAM(row, col, input);
+      digitalWrite(LED_BUILTIN, output);
     }
   }
   
