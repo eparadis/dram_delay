@@ -155,7 +155,11 @@ void loop() {
         unassertWrite();
         unassertCAS();
         unassertRAS();
-        digitalWrite(LED_BUILTIN, val_out);
+        //digitalWrite(LED_BUILTIN, val_out); // PB5
+        if(val_out)
+          PORTB |= (1<<PB5);
+        else
+          PORTB &= ~(1<<PB5);
       }
     }
   }
