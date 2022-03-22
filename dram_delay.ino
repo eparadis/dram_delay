@@ -49,7 +49,7 @@ void setAddress( byte addr) {
 
   // bottom five bits of the address go to the bottom five bits of PORTB, preserving whatever it already was
   byte z = addr & 0b00011111;
-  z |= (PORTB & 0b1110000);
+  z |= (PORTB &   0b11100000);
   PORTB = z;
 
   // top three bits we just do one at a time i guess
