@@ -51,11 +51,13 @@ void setAddress( byte addr) {
 }
 
 void assertRAS() {
-  digitalWrite(_RAS, LOW);
+//  digitalWrite(_RAS, LOW);
+  PORTD &= ~(1<<PD3);
 }
 
 void assertCAS() {
-  digitalWrite(_CAS, LOW);
+//  digitalWrite(_CAS, LOW);
+  PORTD &= ~(1<<PD2);
 }
 
 byte readData() {
@@ -63,19 +65,23 @@ byte readData() {
 }
 
 void unassertRAS() {
-  digitalWrite(_RAS, HIGH);
+  //digitalWrite(_RAS, HIGH);
+  PORTD |= (1<<PD3);
 }
 
 void unassertCAS() {
-  digitalWrite(_CAS, HIGH);
+  //digitalWrite(_CAS, HIGH);
+  PORTD |= (1<<PD2);
 }
 
 void assertWrite() {
-  digitalWrite(_WE, LOW);
+  //digitalWrite(_WE, LOW);
+  PORTD &= ~(1<<PD4);
 }
 
 void unassertWrite() {
-  digitalWrite(_WE, HIGH);
+  //digitalWrite(_WE, HIGH);
+  PORTD |= (1<<PD4);
 }
 
 void writeData( byte d) {
@@ -140,7 +146,7 @@ void loop() {
         setAddress(col);
         assertCAS();
         val_out = readData();
-        //writeData(input);
+
         // write data
         if( input)
           PORTD |= (1<<PD5);
@@ -150,7 +156,7 @@ void loop() {
         assertWrite();
         unassertWrite();
         unassertCAS();
-        //digitalWrite(LED_BUILTIN, val_out); // PB5
+
         if(val_out)
           PORTB |= (1<<PB5);
         else
