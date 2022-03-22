@@ -39,7 +39,7 @@ void setup() {
   TIMSK0 = 0x00; // turn off delay timer to reduce jitter
 }
 
-void setRowAddress( byte addr) {
+void setAddress( byte addr) {
   digitalWrite(AD0, addr & 0x01);
   digitalWrite(AD1, addr & 0x02);
   digitalWrite(AD2, addr & 0x04);
@@ -52,17 +52,6 @@ void setRowAddress( byte addr) {
 
 void assertRAS() {
   digitalWrite(_RAS, LOW);
-}
-
-void setColumnAddress( byte addr) {
-  digitalWrite(AD0, addr & 0x01);
-  digitalWrite(AD1, addr & 0x02);
-  digitalWrite(AD2, addr & 0x04);
-  digitalWrite(AD3, addr & 0x08);
-  digitalWrite(AD4, addr & 0x10);
-  digitalWrite(AD5, addr & 0x20);
-  digitalWrite(AD6, addr & 0x40);
-  digitalWrite(AD7, addr & 0x80);
 }
 
 void assertCAS() {
@@ -94,11 +83,11 @@ void writeData( byte d) {
 }
 
 void writeToDRAM( byte row, byte col, byte val) {
-  setRowAddress(row);
+  setAddress(row);
   assertRAS();
   assertWrite();
   writeData(val);
-  setColumnAddress(col);
+  setAddress(col);
   assertCAS();
   unassertWrite();
   unassertCAS();
@@ -106,9 +95,9 @@ void writeToDRAM( byte row, byte col, byte val) {
 }
 
 byte readFromDRAM( byte row, byte col) {
-  setRowAddress(row);
+  setAddress(row);
   assertRAS();
-  setColumnAddress(col);
+  setAddress(col);
   assertCAS();
   byte val = readData();
   unassertCAS();
@@ -117,9 +106,9 @@ byte readFromDRAM( byte row, byte col) {
 }
 
 byte readAndWriteDRAM( byte row, byte col, byte val_in) {
-  setRowAddress(row);
+  setAddress(row);
   assertRAS();
-  setColumnAddress(col);
+  setAddress(col);
   assertCAS();
   byte val_out = readData();
   writeData(val_in);
@@ -143,12 +132,12 @@ void loop() {
 //  Serial.print(".");
   while(1) {
     for( row = 0; row < ROW_MAX; row+=1) {
-      setRowAddress(row);
+      setAddress(row);
       assertRAS();
 
       for( col = 0; col < COL_MAX; col+=1) {
         input = ACSR & (1<<ACO); // get comparator data
-        setColumnAddress(col);
+        setAddress(col);
         assertCAS();
         val_out = readData();
         writeData(input);
