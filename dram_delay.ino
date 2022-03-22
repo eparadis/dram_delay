@@ -134,15 +134,28 @@ byte readAndWriteDRAM( byte row, byte col, byte val_in) {
 #define ROW_MAX 256
 #define COL_MAX 256
 
+int row;
+int col;
+byte input;
+byte val_out;
+
 void loop() {
 //  Serial.print(".");
   while(1) {
-    for( int row = 0; row < ROW_MAX; row+=1) {
-      for( int col = 0; col < COL_MAX; col+=1) {
-        byte input = ACSR & (1<<ACO); // get comparator data
-        digitalWrite(DIN, input);
-        //byte output = readAndWriteDRAM(row, col, input);
-        //digitalWrite(LED_BUILTIN, output);
+    for( row = 0; row < ROW_MAX; row+=1) {
+      for( col = 0; col < COL_MAX; col+=1) {
+        input = ACSR & (1<<ACO); // get comparator data
+        setRowAddress(row);
+        assertRAS();
+        setColumnAddress(col);
+        assertCAS();
+        val_out = readData();
+        writeData(input);
+        assertWrite();
+        unassertWrite();
+        unassertCAS();
+        unassertRAS();
+        digitalWrite(LED_BUILTIN, val_out);
       }
     }
   }
