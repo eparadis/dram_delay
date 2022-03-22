@@ -40,14 +40,37 @@ void setup() {
 }
 
 void setAddress( byte addr) {
-  digitalWrite(AD0, addr & 0x01);
-  digitalWrite(AD1, addr & 0x02);
-  digitalWrite(AD2, addr & 0x04);
-  digitalWrite(AD3, addr & 0x08);
-  digitalWrite(AD4, addr & 0x10);
-  digitalWrite(AD5, addr & 0x20);
-  digitalWrite(AD6, addr & 0x40);
-  digitalWrite(AD7, addr & 0x80);
+  // ignore the order of the address bits because it's just a big mux grid anyhow
+  //digitalWrite(AD1, addr & 0x02); // PB0
+  //digitalWrite(AD7, addr & 0x80); // PB1
+  //digitalWrite(AD5, addr & 0x20); // PB2
+  //digitalWrite(AD4, addr & 0x10); // PB3
+  //digitalWrite(AD3, addr & 0x08); // PB4
+
+  // bottom five bits of the address go to the bottom five bits of PORTB, preserving whatever it already was
+  byte z = addr & 0b00011111;
+  z |= (PORTB & 0b1110000);
+  PORTB = z;
+
+  // top three bits we just do one at a time i guess
+  // again we're ignoring the order these are really connected. if it matters, we'll swap the wires
+  //digitalWrite(AD0, addr & 0x01); // PC0
+  if(addr & 0x20)
+    PORTC |= (1<<PC0);
+  else
+    PORTC &= ~(1<<PC0);
+
+  //digitalWrite(AD2, addr & 0x04); // PC2
+  if(addr & 0x40)
+    PORTC |= (1<<PC2);
+  else
+    PORTC &= ~(1<<PC2);
+
+  //digitalWrite(AD6, addr & 0x40); // PC3
+  if(addr & 0x80)
+    PORTC |= (1<<PC3);
+  else
+    PORTC &= ~(1<<PC3);
 }
 
 void assertRAS() {
