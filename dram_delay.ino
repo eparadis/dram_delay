@@ -143,10 +143,11 @@ void loop() {
 //  Serial.print(".");
   while(1) {
     for( row = 0; row < ROW_MAX; row+=1) {
+      setRowAddress(row);
+      assertRAS();
+
       for( col = 0; col < COL_MAX; col+=1) {
         input = ACSR & (1<<ACO); // get comparator data
-        setRowAddress(row);
-        assertRAS();
         setColumnAddress(col);
         assertCAS();
         val_out = readData();
@@ -154,13 +155,14 @@ void loop() {
         assertWrite();
         unassertWrite();
         unassertCAS();
-        unassertRAS();
         //digitalWrite(LED_BUILTIN, val_out); // PB5
         if(val_out)
           PORTB |= (1<<PB5);
         else
           PORTB &= ~(1<<PB5);
       }
+
+      unassertRAS();
     }
   }
 }
