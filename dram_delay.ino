@@ -175,6 +175,7 @@ unsigned int dummy = 0;
 unsigned int dummy2 = 0;
 bool adc_conversion_working = false;
 unsigned int start_row = 0;
+byte adcChannel = 7;
 
 // inlining the assert___ and unassert___ did zero speed up, so I dropped that commit
 // using bytes (and max of 255) for loops didn't do anything. 
@@ -218,14 +219,31 @@ void loop() {
       // The ADC clears the bit when done; we're looking for a change in value
       if (bit_is_clear(ADCSRA, ADSC)) {
         adc_conversion_working = false;
-
-        // did it actually change values?
-        dummy = (ADC >> 1) + 2; // you can't go below 2 or the loops crash
-        if( ROW_MAX != dummy ) {
-          ROW_MAX = dummy;
-          // if we just messed up our loop, wrap it where it should be
-          row = row % ROW_MAX;
+        if( adcChannel == 7) {
+          // did A7 actually change values?
+          dummy = (ADC >> 1) + 2; // you can't go below 2 or the loops crash
+          if( ROW_MAX != dummy ) {
+            ROW_MAX = dummy;
+            // if we just messed up our loop, wrap it where it should be
+            row = row % ROW_MAX;
+          }
+          adcChannel = 6;
+          ADMUX  = bit(REFS0) // AVCC
+           | ((A6 - 14) & 0x07); // Arduino Uno to ADC pin
+        } else {
+          // A6 is the only other option, for now
+          dummy = (ADC >> 1);
+          if( start_row != dummy) {
+            start_row = dummy;
+            if( start_row >= ROW_MAX - 2)
+              start_row = ROW_MAX - 2;
+          }
+          adcChannel = 7;
+          ADMUX  = bit(REFS0) // AVCC
+           | ((A7 - 14) & 0x07); // Arduino Uno to ADC pin
         }
+
+        
       }
     }
   }
