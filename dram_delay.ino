@@ -216,7 +216,7 @@ void loop() {
 
       // The ADC clears the bit when done
       if (bit_is_clear(ADCSRA, ADSC)) {
-        dummy = ADC >> 2;
+        dummy = ADC >> 1;
         start_row = constrain(dummy, 0, ROW_MAX - 1);  // Read result
         adc_conversion_working = false;
       }
