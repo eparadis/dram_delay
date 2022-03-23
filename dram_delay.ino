@@ -33,7 +33,7 @@ void setup() {
   pinMode(DOUT, INPUT);  // our one input!
   pinMode(_CAS, OUTPUT);
 
-//  Serial.begin(9600);
+//  Serial.begin(115200);
 
 
   DIDR1 = 0x03; // turn off digital inputs for analog comparator (pg 259 of datasheet)
@@ -164,16 +164,17 @@ byte readAndWriteDRAM( byte row, byte col, byte val_in) {
   return val_out;
 }
 
-#define ROW_MAX 512
-#define COL_MAX 512
+unsigned int ROW_MAX = 512;
+unsigned int COL_MAX = 512;
 
-int row;
-int col;
+unsigned int row;
+unsigned int col;
 byte input;
 byte val_out;
-int dummy;
+unsigned int dummy = 0;
+unsigned int dummy2 = 0;
 bool adc_conversion_working = false;
-int start_row = 0;
+unsigned int start_row = 0;
 
 // inlining the assert___ and unassert___ did zero speed up, so I dropped that commit
 // using bytes (and max of 255) for loops didn't do anything. 
@@ -214,11 +215,17 @@ void loop() {
         adc_conversion_working = true;
       }
 
-      // The ADC clears the bit when done
+      // The ADC clears the bit when done; we're looking for a change in value
       if (bit_is_clear(ADCSRA, ADSC)) {
-        dummy = ADC >> 1;
-        start_row = constrain(dummy, 0, ROW_MAX - 1);  // Read result
         adc_conversion_working = false;
+
+        // did it actually change values?
+        dummy = (ADC >> 1) + 2; // you can't go below 2 or the loops crash
+        if( ROW_MAX != dummy ) {
+          ROW_MAX = dummy;
+          // if we just messed up our loop, wrap it where it should be
+          row = row % ROW_MAX;
+        }
       }
     }
   }
