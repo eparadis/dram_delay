@@ -12,6 +12,7 @@
 #define AD7 9
 #define DOUT A1 // will be used as a digital input
 #define _CAS 2
+#define AD8 A4 // will be used as a digital output
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // aka pin D13
@@ -27,6 +28,7 @@ void setup() {
   pinMode(AD5, OUTPUT);
   pinMode(AD6, OUTPUT);
   pinMode(AD7, OUTPUT);
+  pinMode(AD8, OUTPUT);
   pinMode(_WE, OUTPUT);
   pinMode(DOUT, INPUT);  // our one input!
   pinMode(_CAS, OUTPUT);
@@ -46,7 +48,7 @@ void setup() {
            | ((adcPin - 14) & 0x07); // Arduino Uno to ADC pin
 }
 
-void setAddress( byte addr) {
+void setAddress( int addr) {
   // ignore the order of the address bits because it's just a big mux grid anyhow
   //digitalWrite(AD1, addr & 0x02); // PB0
   //digitalWrite(AD7, addr & 0x80); // PB1
@@ -78,6 +80,12 @@ void setAddress( byte addr) {
     PORTC |= (1<<PC3);
   else
     PORTC &= ~(1<<PC3);
+
+  //digitalWrite(AD8, something something..... PC4
+  if(addr & 0x0100)
+    PORTC |= (1<<PC4);
+  else
+    PORTC &= ~(1<<PC4);
 }
 
 void assertRAS() {
@@ -156,8 +164,8 @@ byte readAndWriteDRAM( byte row, byte col, byte val_in) {
   return val_out;
 }
 
-#define ROW_MAX 256
-#define COL_MAX 256
+#define ROW_MAX 512
+#define COL_MAX 512
 
 int row;
 int col;
