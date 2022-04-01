@@ -164,8 +164,15 @@ byte readAndWriteDRAM( byte row, byte col, byte val_in) {
   return val_out;
 }
 
-unsigned int ROW_MAX = 512;
-unsigned int COL_MAX = 512;
+byte adcChannel = A7;
+void setADCChannel(byte pin) {
+  adcChannel = pin;
+  ADMUX  = bit(REFS0) // AVCC
+    | ((pin - 14) & 0x07); // Arduino Uno to ADC pin
+}
+
+#define ROW_MAX 511
+#define COL_MAX 511
 
 unsigned int row;
 unsigned int col;
@@ -175,7 +182,7 @@ unsigned int dummy = 0;
 unsigned int dummy2 = 0;
 bool adc_conversion_working = false;
 unsigned int start_row = 0;
-byte adcChannel = 7;
+unsigned int row_length = 512;
 
 // inlining the assert___ and unassert___ did zero speed up, so I dropped that commit
 // using bytes (and max of 255) for loops didn't do anything. 
@@ -183,7 +190,7 @@ byte adcChannel = 7;
 void loop() {
 //  Serial.print(".");
   while(1) {
-    for( row = start_row; row < ROW_MAX; row+=1) {
+    for( row = start_row; row < (start_row + row_length); row+=1) {
       setAddress(row);
       assertRAS();
 
@@ -219,28 +226,31 @@ void loop() {
       // The ADC clears the bit when done; we're looking for a change in value
       if (bit_is_clear(ADCSRA, ADSC)) {
         adc_conversion_working = false;
-        if( adcChannel == 7) {
+        if( adcChannel == A7) {
           // did A7 actually change values?
-          dummy = (ADC >> 1) + 2; // you can't go below 2 or the loops crash
-          if( ROW_MAX != dummy ) {
-            ROW_MAX = dummy;
-            // if we just messed up our loop, wrap it where it should be
-            row = row % ROW_MAX;
+          dummy = (ADC >> 1) + 1; // 1..512
+          if( row_length != dummy ) {
+            row_length = dummy;
+            // don't let our length be longer than our buffer
+            if( (start_row + row_length) > ROW_MAX)
+              row_length = ROW_MAX - start_row;
           }
-          adcChannel = 6;
-          ADMUX  = bit(REFS0) // AVCC
-           | ((A6 - 14) & 0x07); // Arduino Uno to ADC pin
+          setADCChannel(A6);
+
+//          Serial.print(start_row);
+//          Serial.print(' ');
+//          Serial.print(row_length);
+//          Serial.print(' ');
+//          Serial.println(start_row + row_length);
         } else {
           // A6 is the only other option, for now
-          dummy = (ADC >> 1);
+          dummy = (ADC >> 1); // 0..511
           if( start_row != dummy) {
             start_row = dummy;
-            if( start_row >= ROW_MAX - 2)
-              start_row = ROW_MAX - 2;
+            if( start_row > ROW_MAX - 1)
+              start_row = ROW_MAX - 1;
           }
-          adcChannel = 7;
-          ADMUX  = bit(REFS0) // AVCC
-           | ((A7 - 14) & 0x07); // Arduino Uno to ADC pin
+          setADCChannel(A7);
         }
 
         
