@@ -170,7 +170,6 @@ unsigned int row_length = 512;
 // using bytes (and max of 255) for loops didn't do anything. 
 
 void loop() {
-  while(1) {
     for( row = start_row; row < (start_row + row_length); row+=1) {
       setAddress(row);
       assertRAS();
@@ -180,14 +179,10 @@ void loop() {
         setAddress(col);
         assertCAS();
         val_out = readData();
-
-        // write data
         writeData( input);
-        
         assertWrite();
         unassertWrite();
         unassertCAS();
-
         dacOut(val_out);
       }
 
@@ -223,5 +218,4 @@ void loop() {
         }
       }
     }
-  }
 }
