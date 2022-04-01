@@ -2,17 +2,17 @@
 #define DIN 5
 #define _WE 4
 #define _RAS 3
-#define AD0 A0 // will be used as a digital output
-#define AD1 8
-#define AD2 A2 // will be used as a digital output
-#define AD3 12
-#define AD4 11
-#define AD5 10
-#define AD6 A3 // will be used as a digital output
-#define AD7 9
-#define DOUT A1 // will be used as a digital input
+#define AD0 A1 // PC1 will be used as a digital output
+#define AD1 8  // PB0
+#define AD2 A2 // PC2 will be used as a digital output
+#define AD3 12 // PB4
+#define AD4 11 // PB3
+#define AD5 10 // PB2
+#define AD6 A3 // PC3 will be used as a digital output
+#define AD7 9  // PB1
+#define DOUT A0 // PC0 will be used as a digital input
 #define _CAS 2
-#define AD8 A4 // will be used as a digital output
+#define AD8 A4 // PC4 will be used as a digital output
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT); // aka pin D13
@@ -33,28 +33,18 @@ void setup() {
   pinMode(DOUT, INPUT);  // our one input!
   pinMode(_CAS, OUTPUT);
 
-//  Serial.begin(115200);
-
-
   DIDR1 = 0x03; // turn off digital inputs for analog comparator (pg 259 of datasheet)
   ACSR = 0x00; // setup analog comparator
   TIMSK0 = 0x00; // turn off delay timer to reduce jitter
 
-
   ADCSRA = bit(ADEN) // Turn ADC on
            | bit(ADPS0) | bit(ADPS1) | bit(ADPS2); // Prescaler of 128
-  byte adcPin = A7;
   ADMUX  = bit(REFS0) // AVCC
-           | ((adcPin - 14) & 0x07); // Arduino Uno to ADC pin
+           | ((A7 - 14) & 0x07); // Arduino Uno to ADC pin
 }
 
 void setAddress( int addr) {
   // ignore the order of the address bits because it's just a big mux grid anyhow
-  //digitalWrite(AD1, addr & 0x02); // PB0
-  //digitalWrite(AD7, addr & 0x80); // PB1
-  //digitalWrite(AD5, addr & 0x20); // PB2
-  //digitalWrite(AD4, addr & 0x10); // PB3
-  //digitalWrite(AD3, addr & 0x08); // PB4
 
   // bottom five bits of the address go to the bottom five bits of PORTB, preserving whatever it already was
   byte z = addr & 0b00011111;
@@ -63,29 +53,32 @@ void setAddress( int addr) {
 
   // top three bits we just do one at a time i guess
   // again we're ignoring the order these are really connected. if it matters, we'll swap the wires
-  //digitalWrite(AD0, addr & 0x01); // PC0
+  // AD0 => PC1
   if(addr & 0x20)
-    PORTC |= (1<<PC0);
+    PORTC |= (1<<PC1);
   else
-    PORTC &= ~(1<<PC0);
+    PORTC &= ~(1<<PC1);
 
-  //digitalWrite(AD2, addr & 0x04); // PC2
+  // AD2 => PC2
   if(addr & 0x40)
     PORTC |= (1<<PC2);
   else
     PORTC &= ~(1<<PC2);
 
-  //digitalWrite(AD6, addr & 0x40); // PC3
+  // AD6 => PC3
   if(addr & 0x80)
     PORTC |= (1<<PC3);
   else
     PORTC &= ~(1<<PC3);
 
-  //digitalWrite(AD8, something something..... PC4
+  // AD8 => PC4
   if(addr & 0x0100)
     PORTC |= (1<<PC4);
   else
     PORTC &= ~(1<<PC4);
+
+//  int y = (addr & 0b111000000) >> 4; // so now at 0b0011100
+//  y |= (PORTC & 0b1100011); // we take what PORTC already was
 }
 
 void assertRAS() {
@@ -188,7 +181,6 @@ unsigned int row_length = 512;
 // using bytes (and max of 255) for loops didn't do anything. 
 
 void loop() {
-//  Serial.print(".");
   while(1) {
     for( row = start_row; row < (start_row + row_length); row+=1) {
       setAddress(row);
@@ -236,12 +228,6 @@ void loop() {
               row_length = ROW_MAX - start_row;
           }
           setADCChannel(A6);
-
-//          Serial.print(start_row);
-//          Serial.print(' ');
-//          Serial.print(row_length);
-//          Serial.print(' ');
-//          Serial.println(start_row + row_length);
         } else {
           // A6 is the only other option, for now
           dummy = (ADC >> 1); // 0..511
@@ -252,8 +238,6 @@ void loop() {
           }
           setADCChannel(A7);
         }
-
-        
       }
     }
   }
