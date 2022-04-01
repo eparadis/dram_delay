@@ -1,7 +1,7 @@
 
 #define DIN 5 // PD5
-#define _WE 4
-#define _RAS 3
+#define _WE 4 // PD4
+#define _RAS 3 // PD3
 #define AD0 A1 // PC1 will be used as a digital output
 #define AD1 8  // PB0
 #define AD2 A2 // PC2 will be used as a digital output
@@ -11,9 +11,9 @@
 #define AD6 A3 // PC3 will be used as a digital output
 #define AD7 9  // PB1
 #define DOUT A0 // PC0 will be used as a digital input
-#define _CAS 2
+#define _CAS 2 // PD2
 #define AD8 A4 // PC4 will be used as a digital output
-#define AUDIO_OUT 13 // also the LED, so it's a nice debug
+#define AUDIO_OUT 13 // PB5 also the LED, so it's a nice debug
 
 void setup() {
   pinMode(AUDIO_OUT, OUTPUT);
@@ -74,49 +74,39 @@ void setAddress( int addr) {
 }
 
 void assertRAS() {
-//  digitalWrite(_RAS, LOW);
-  PORTD &= ~(1<<PD3);
+  PORTD &= ~(1<<PD3); // _RAS LOW
 }
 
 void assertCAS() {
-//  digitalWrite(_CAS, LOW);
-  PORTD &= ~(1<<PD2);
+  PORTD &= ~(1<<PD2); // _CAS LOW
 }
 
 byte readData() {
-//  return digitalRead(DOUT);
-  // DOUT is PC0
-  return (PINC & (1<<PC0));
+  return (PINC & (1<<PC0)); // DOUT is PC0
 }
 
 void unassertRAS() {
-  //digitalWrite(_RAS, HIGH);
-  PORTD |= (1<<PD3);
+  PORTD |= (1<<PD3); // _RAS HIGH
 }
 
 void unassertCAS() {
-  //digitalWrite(_CAS, HIGH);
-  PORTD |= (1<<PD2);
+  PORTD |= (1<<PD2); // _CAS HIGH
 }
 
 void assertWrite() {
-  //digitalWrite(_WE, LOW);
-  PORTD &= ~(1<<PD4);
+  PORTD &= ~(1<<PD4); // _WE LOW
 }
 
 void unassertWrite() {
-  //digitalWrite(_WE, HIGH);
-  PORTD |= (1<<PD4);
+  PORTD |= (1<<PD4); // _WE HIGH
 }
 
 void writeData( byte d) {
-  // DIN is PD5
-  bitWrite(PORTD, PD5, d);
-  //digitalWrite(DIN, d);
+  bitWrite(PORTD, PD5, d);   // DIN is PD5
 }
 
 void dacOut( byte v) {
-  bitWrite(PORTB, PB5, v);
+  bitWrite(PORTB, PB5, v); // DOUT is PB5, which is also the D13 LED
 }
 
 void writeToDRAM( byte row, byte col, byte val) {
@@ -172,7 +162,6 @@ unsigned int col;
 byte input;
 byte val_out;
 unsigned int dummy = 0;
-unsigned int dummy2 = 0;
 bool adc_conversion_working = false;
 unsigned int start_row = 0;
 unsigned int row_length = 512;
@@ -194,20 +183,12 @@ void loop() {
 
         // write data
         writeData( input);
-//        if( input)
-//          PORTD |= (1<<PD5);
-//        else
-//          PORTD &= ~(1<<PD5);
         
         assertWrite();
         unassertWrite();
         unassertCAS();
 
         dacOut(val_out);
-//        if(val_out)
-//          PORTB |= (1<<PB5);
-//        else
-//          PORTB &= ~(1<<PB5);
       }
 
       unassertRAS();
