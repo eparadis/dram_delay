@@ -12,8 +12,14 @@ of the DRAM is used. This varies the length of the delay, although the steps
 available get fairly coarse due to the inverse relationship between length and
 time.
 
-This design could use a 256k x 1 bit DRAM for four times the delay length with
-little additional complication.
+A second ADC channel is used to vary the starting point. By disconnecting the
+write enable line and using a pull up on the `_WE` line of the DRAM, you turn
+the delay into a sampler. The two controls then allow you to do interesting
+grainular synth style effects.
+
+This design originally used a 64k x 1 bit DRAM, and has been extended to work
+with one additional address line to use a 256k x 1 bit DRAM. Converting back
+would be trivial if that suits your requirements.
 
 ### Problems
 
@@ -21,26 +27,39 @@ There is no attempt to control the jitter of the sigma-delta conversion, so ther
 is a fair bit of noise. This shows up as hiss on the output, so I am using a
 fairly aggressive low-pass filter there.
 
-Although I did take steps to optimize the performance of the main loop, it only
-runs at about 139 khz. This is okay, but don't expect hifi sound. It does
-reproduce drum samples and voice recognizably, but expect either a lot of added
-hiss or very attenuated high frequencies, depending on how far you go with the
-output LPF.
+I have measured the jitter as almost exactly 1uS by looking at the period of the
+write enable pulse on a storage oscilloscope. The main loop seems to run between
+168khz and 202khz.
+
+I took all the easily available performance optimizations, most of which were
+to not use `digitalWrite` and instead use `bitWrite` on the AVR ports directly.
+This is quite easy and worth the effort. Sound quality is reasonable although
+I haven't done a full test. The input aliasing filter and output reconstruction
+filters are simple RC circuits with parts I had on hand that seemed to sound
+good.
+
+The output filter is 10k ohms and 1uF. The input filter is 10k ohms and 100nF.
 
 ### Further possibilities
 
 If you put a pull up resistor on the DRAM /WE line, you can use a simple momentary
 switch to disconnect the Arduino's ability to overwrite. This leaves whatever is
-in the DRAM to repeat forever, like a sampler.
+in the DRAM to repeat forever, like a sampler. You could use some diode or discrete
+transistor logic to control this externally.
 
-Another way to control the buffer is to have two potentiometers: one for the 
-start location and one for the length of the buffer. With the above Write disable,
-you can sample some audio, then play different parts of the buffer as a loop and
-at different lengths. You can do this on a Korg Volca Sample and it's fun stuff.
+I have no pursued finding a way to vary the sampling speed of the system. This
+is an expected feature for a sampler, and may be a nice addition to a delay.
+You could either try to syncronize the sytem to a timer interrupt and then vary
+the timer parameters, or simply add a variable length busy loop.
 
-One thing to figure out is how to actually slow down the system in a reasonable,
-fine-grained way so that you can alter the pitch of a "captured" loop. Adding
-some type of variable but fast busy loop seems worth a shot.
+### External hardware
 
+If you want to use the delay like a reverb, use opamps to feedback the output
+into the input.
 
+As mentioned, some simple logic or push button will allow you to switch between
+delay and looper/sampler modes.
+
+You'll probably want to buffer the inputs and outputs of the ciruit to protect
+the hardware from static and over-voltage.
 
