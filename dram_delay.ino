@@ -1,5 +1,5 @@
 
-#define DIN 5
+#define DIN 5 // PD5
 #define _WE 4
 #define _RAS 3
 #define AD0 A1 // PC1 will be used as a digital output
@@ -13,9 +13,10 @@
 #define DOUT A0 // PC0 will be used as a digital input
 #define _CAS 2
 #define AD8 A4 // PC4 will be used as a digital output
+#define AUDIO_OUT 13 // also the LED, so it's a nice debug
 
 void setup() {
-  pinMode(LED_BUILTIN, OUTPUT); // aka pin D13
+  pinMode(AUDIO_OUT, OUTPUT);
 
   pinMode(DIN, OUTPUT);
   pinMode(_WE, OUTPUT);
@@ -83,7 +84,9 @@ void assertCAS() {
 }
 
 byte readData() {
-  return digitalRead(DOUT);
+//  return digitalRead(DOUT);
+  // DOUT is PC0
+  return (PINC & (1<<PC0));
 }
 
 void unassertRAS() {
@@ -107,7 +110,13 @@ void unassertWrite() {
 }
 
 void writeData( byte d) {
-  digitalWrite(DIN, d);
+  // DIN is PD5
+  bitWrite(PORTD, PD5, d);
+  //digitalWrite(DIN, d);
+}
+
+void dacOut( byte v) {
+  bitWrite(PORTB, PB5, v);
 }
 
 void writeToDRAM( byte row, byte col, byte val) {
@@ -184,19 +193,21 @@ void loop() {
         val_out = readData();
 
         // write data
-        if( input)
-          PORTD |= (1<<PD5);
-        else
-          PORTD &= ~(1<<PD5);
+        writeData( input);
+//        if( input)
+//          PORTD |= (1<<PD5);
+//        else
+//          PORTD &= ~(1<<PD5);
         
         assertWrite();
         unassertWrite();
         unassertCAS();
 
-        if(val_out)
-          PORTB |= (1<<PB5);
-        else
-          PORTB &= ~(1<<PB5);
+        dacOut(val_out);
+//        if(val_out)
+//          PORTB |= (1<<PB5);
+//        else
+//          PORTB &= ~(1<<PB5);
       }
 
       unassertRAS();
