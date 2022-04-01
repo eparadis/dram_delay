@@ -51,34 +51,25 @@ void setAddress( int addr) {
   z |= (PORTB &   0b11100000);
   PORTB = z;
 
-  // top three bits we just do one at a time i guess
-  // again we're ignoring the order these are really connected. if it matters, we'll swap the wires
-  // AD0 => PC1
-  if(addr & 0x20)
-    PORTC |= (1<<PC1);
-  else
-    PORTC &= ~(1<<PC1);
+  // top four bits go to PC1 thru PC4
+  bitWrite(PORTC, PC1, addr & 0x20);  // AD0 => PC1
+  bitWrite(PORTC, PC2, addr & 0x40);  // AD2 => PC2
+  bitWrite(PORTC, PC3, addr & 0x80);  // AD6 => PC3
+  bitWrite(PORTC, PC4, addr & 0x100); // AD8 => PC4
 
-  // AD2 => PC2
-  if(addr & 0x40)
-    PORTC |= (1<<PC2);
-  else
-    PORTC &= ~(1<<PC2);
+// this was slower than just setting each pin one by one
+//  int y = (addr & 0b111100000) >> 4; // so now at 0b0011110
+//  y |= (PORTC & 0b1100001); // we take what PORTC already was
+//  PORTC = (byte) y;
 
-  // AD6 => PC3
-  if(addr & 0x80)
-    PORTC |= (1<<PC3);
-  else
-    PORTC &= ~(1<<PC3);
-
-  // AD8 => PC4
-  if(addr & 0x0100)
-    PORTC |= (1<<PC4);
-  else
-    PORTC &= ~(1<<PC4);
-
-//  int y = (addr & 0b111000000) >> 4; // so now at 0b0011100
-//  y |= (PORTC & 0b1100011); // we take what PORTC already was
+// this was also slower than just setting each pin one by one
+//  byte y = (addr & 0b11100000) >> 4; // now at 0b00001110
+//  y |= (PORTC & 0b11110001);
+//  if(addr & 0x100)
+//    y |= (1<<PC4);
+//  else
+//    y &= ~(1<<PC4);
+//  PORTC = y;
 }
 
 void assertRAS() {
